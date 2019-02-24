@@ -365,6 +365,11 @@ private:
 	static void ConFreezeHammer(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnFreezeHammer(IConsole::IResult *pResult, void *pUserData);
 
+	// ChillTourna
+
+	static void ConTest(IConsole::IResult *pResult, void *pUserData);
+	static void ConFight(IConsole::IResult *pResult, void *pUserData);
+
 	enum
 	{
 		MAX_MUTES=32,
@@ -416,6 +421,29 @@ public:
 
 	int m_ChatResponseTargetID;
 	int m_ChatPrintCBIndex;
+
+	// ChillTourna
+
+	int GetCIDByName(const char * pName);
+	int CountPlayers();
+
+	void CheckForNewRounds();
+	void StartTournaCountDown();
+	void CheckTournaStartTime();
+	void CheckTournaStartPlayers();
+	void CheckTournaStart();
+	void BlockTournaTick();
+	void StartTournament();
+	void CreateTournaTeam(int player1ID, int player2ID);
+	void EndRound(int player1ID, int player2ID);
+	void TournaScore(int looserID);
+	void NewTournaRound(int ID1, int ID2);
+	void SetTournaTeam(int playerID);
+	int GetTeamMateID(int playerID);
+
+	int m_TournaCountDownTick;
+	int m_TournaTeamCounter; // TODO: get a free team num func instead of incrementing
+	int m_TournaState; // 0=off 1=countdown 2=running 3=gameover (winning screen)
 };
 
 inline int64_t CmaskAll() { return -1LL; }

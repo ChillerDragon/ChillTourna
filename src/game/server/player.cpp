@@ -134,6 +134,10 @@ void CPlayer::Reset()
 
 	m_NotEligibleForFinish = false;
 	m_EligibleForFinishCheck = 0;
+
+	// ChillTourna
+
+	m_TournaState = 0; // set ready
 }
 
 void CPlayer::Tick()
@@ -196,7 +200,7 @@ void CPlayer::Tick()
 
 	if(!GameServer()->m_World.m_Paused)
 	{
-		if(!m_pCharacter && m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick())
+		if(!m_pCharacter) // && m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick())
 			m_Spawning = true;
 
 		if(m_pCharacter)
@@ -560,7 +564,7 @@ void CPlayer::TryRespawn()
 {
 	vec2 SpawnPos;
 
-	if(!GameServer()->m_pController->CanSpawn(m_Team, &SpawnPos))
+	if(!GameServer()->m_pController->CanSpawn(m_Team, &SpawnPos, this))
 		return;
 
 	CGameControllerDDRace* Controller = (CGameControllerDDRace*)GameServer()->m_pController;

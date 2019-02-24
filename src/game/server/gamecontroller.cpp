@@ -104,7 +104,7 @@ void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type)
 	}
 }
 
-bool IGameController::CanSpawn(int Team, vec2 *pOutPos)
+bool IGameController::CanSpawn(int Team, vec2 *pOutPos, class CPlayer *pPlayer)
 {
 	CSpawnEval Eval;
 
@@ -112,25 +112,12 @@ bool IGameController::CanSpawn(int Team, vec2 *pOutPos)
 	if(Team == TEAM_SPECTATORS)
 		return false;
 
-	/*if(IsTeamplay())
-	{
-		Eval.m_FriendlyTeam = Team;
-
-		// first try own team spawn, then normal spawn and then enemy
-		EvaluateSpawnType(&Eval, 1+(Team&1));
-		if(!Eval.m_Got)
-		{
-			EvaluateSpawnType(&Eval, 0);
-			if(!Eval.m_Got)
-				EvaluateSpawnType(&Eval, 1+((Team+1)&1));
-		}
-	}
-	else
-	{*/
-		EvaluateSpawnType(&Eval, 0);
+	if (pPlayer->m_TournaState == 1) // ingame
 		EvaluateSpawnType(&Eval, 1);
-		EvaluateSpawnType(&Eval, 2);
-	//}
+	else
+		EvaluateSpawnType(&Eval, 0);
+	
+	// EvaluateSpawnType(&Eval, 2); // blue spawn is unused for now
 
 	*pOutPos = Eval.m_Pos;
 	return Eval.m_Got;

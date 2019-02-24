@@ -199,6 +199,12 @@ public:
 #endif
 	bool m_NotEligibleForFinish;
 	int64 m_EligibleForFinishCheck;
+
+	// ChillTourna
+
+	int m_RoundScore;
+	int m_RoundsWon;
+	int m_TournaState; // -1=spectator 0=ready 1=ingame 2=waiting_for_opponent 3=lost
 };
 
 #endif

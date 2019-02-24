@@ -748,6 +748,15 @@ void CGameContext::ConLockTeam(IConsole::IResult *pResult, void *pUserData)
 	if (!CheckClientID(pResult->m_ClientID))
 		return;
 
+	if("ChillTourna")
+	{
+		pSelf->Console()->Print(
+				IConsole::OUTPUT_LEVEL_STANDARD,
+				"print",
+				"This command is not allowed");
+		return;
+	}
+
 	int Team = ((CGameControllerDDRace*) pSelf->m_pController)->m_Teams.m_Core.Team(pResult->m_ClientID);
 
 	bool Lock = ((CGameControllerDDRace*) pSelf->m_pController)->m_Teams.TeamLocked(Team);
@@ -1393,6 +1402,49 @@ void CGameContext::ConProtectedKill(IConsole::IResult *pResult, void *pUserData)
 			//		((CurrTime % 60) > 9) ? "" : "0", CurrTime % 60);
 			//pSelf->SendChatTarget(pResult->m_ClientID, aBuf);
 	}
+}
+
+void CGameContext::ConTest(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *) pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
+	if (!pPlayer)
+		return;
+	pSelf->SendChatTarget(pPlayer->GetCID(), "test failed");
+	pSelf->StartTournament();
+}
+
+void CGameContext::ConFight(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *) pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
+	if (!pPlayer)
+		return;
+
+	if (pResult->NumArguments() != 2)
+	{
+		pSelf->SendChatTarget(pPlayer->GetCID(), "Usage: /fight <player1> <player2>");
+		pSelf->SendChatTarget(pPlayer->GetCID(), "Info: teleports two given players into a 1n1 arena");
+	}
+
+	char aBuf[128];
+	int ID1 = pSelf->GetCIDByName(pResult->GetString(0));
+	int ID2 = pSelf->GetCIDByName(pResult->GetString(1));
+
+	if (ID1 == -1 || ID2 == -1)
+	{
+		str_format(aBuf, sizeof(aBuf), "Error: player '%s' is not online.", pResult->GetString(ID1 == -1 ? ID1 : ID2));
+		pSelf->SendChatTarget(pPlayer->GetCID(), aBuf);
+		return;
+	}
+
+	pSelf->CreateTournaTeam(ID1, ID2);
+	str_format(aBuf, sizeof(aBuf), "Created block match with '%s' and '%s'.", pResult->GetString(0), pResult->GetString(1));
+	pSelf->SendChatTarget(pPlayer->GetCID(), aBuf);
 }
 
 #if defined(CONF_SQL)

@@ -78,6 +78,14 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	Server()->StartRecord(m_pPlayer->GetCID());
 
+	// ChillTourna
+
+	if (m_pPlayer->m_TournaState == 1)
+	{
+		UnFreeze();
+		Freeze(3);
+	}
+
 	return true;
 }
 
@@ -1473,6 +1481,12 @@ void CCharacter::HandleTiles(int Index)
 
 	}
 
+	// ChillTourna block score tile
+	if ((m_TileIndex == TILE_TOURNA_SCORE) || (m_TileFIndex == TILE_TOURNA_SCORE))
+	{
+		GameServer()->TournaScore(m_pPlayer->GetCID());
+	}
+
 	// finish
 	if(((m_TileIndex == TILE_END) || (m_TileFIndex == TILE_END) || FTile1 == TILE_END || FTile2 == TILE_END || FTile3 == TILE_END || FTile4 == TILE_END || Tile1 == TILE_END || Tile2 == TILE_END || Tile3 == TILE_END || Tile4 == TILE_END) && m_DDRaceState == DDRACE_STARTED)
 		Controller->m_Teams.OnCharacterFinish(m_pPlayer->GetCID());
@@ -1941,7 +1955,7 @@ void CCharacter::HandleTiles(int Index)
 		}
 		// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
 		vec2 SpawnPos;
-		if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos))
+		if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos, m_pPlayer))
 		{
 			m_Core.m_Pos = SpawnPos;
 			m_Core.m_Vel = vec2(0,0);
@@ -1982,7 +1996,7 @@ void CCharacter::HandleTiles(int Index)
 		}
 		// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
 		vec2 SpawnPos;
-		if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos))
+		if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos, m_pPlayer))
 		{
 			m_Core.m_Pos = SpawnPos;
 

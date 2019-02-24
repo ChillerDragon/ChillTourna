@@ -50,6 +50,11 @@ CHAT_COMMAND("rescue", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConRescue, this, "Telepo
 
 CHAT_COMMAND("kill", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConProtectedKill, this, "Kill yourself")
 
+// ChillTourna
+
+CHAT_COMMAND("test", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTest, this, "For testing purposes")
+CHAT_COMMAND("fight", "?ss", CFGFLAG_CHAT|CFGFLAG_SERVER, ConFight, this, "Command to start 1n1 between to players")
+
 #if defined(CONF_SQL)
 CHAT_COMMAND("times", "?s[player name] ?i[number of times to skip]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTimes, this, "/times ?s?i shows last 5 times of the server or of a player beginning with name s starting with time i (i = 1 by default)")
 CHAT_COMMAND("points", "?r[player name]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConPoints, this, "Shows the global points of a player beginning with name r (your rank by default)")

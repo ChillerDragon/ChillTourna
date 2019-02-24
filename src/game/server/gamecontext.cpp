@@ -60,6 +60,10 @@ void CGameContext::Construct(int Resetting)
 	m_ChatResponseTargetID = -1;
 	m_aDeleteTempfile[0] = 0;
 	m_TeeHistorianActive = false;
+
+	// ChillTourna
+	m_TournaState = 0; // off
+	m_TournaTeamCounter = 0;
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -640,6 +644,9 @@ void CGameContext::SwapTeams()
 */
 void CGameContext::OnTick()
 {
+	// ChillTourna
+	BlockTournaTick();
+
 	// check tuning
 	CheckPureTuning();
 
@@ -1090,8 +1097,7 @@ void CGameContext::OnClientEnter(int ClientID)
 		str_format(aBuf, sizeof(aBuf), "'%s' entered and joined the %s", Server()->ClientName(ClientID), m_pController->GetTeamName(m_apPlayers[ClientID]->GetTeam()));
 		SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 
-		SendChatTarget(ClientID, "DDraceNetwork Mod. Version: " GAME_VERSION);
-		SendChatTarget(ClientID, "please visit DDNet.tw or say /info for more info");
+		SendChatTarget(ClientID, "ChillTourna mod by ChillerDragon. Based on ddnet Version: " GAME_VERSION);
 
 		if(g_Config.m_SvWelcome[0]!=0)
 			SendChatTarget(ClientID,g_Config.m_SvWelcome);
@@ -3650,4 +3656,314 @@ void CGameContext::ForceVote(int EnforcerID, bool Success)
 	SendChatTarget(-1, aBuf);
 	str_format(aBuf, sizeof(aBuf), "forcing vote %s", pOption);
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+}
+
+// ChillTourna
+
+int CGameContext::GetCIDByName(const char * pName)
+{
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (!m_apPlayers[i])
+			continue;
+		if (!str_comp(pName, Server()->ClientName(i)))
+			return i;
+	}
+	return -1;
+}
+
+int CGameContext::CountPlayers()
+{
+	int c = 0;
+	for (int i = 0; i < MAX_CLIENTS; i++)
+		if (m_apPlayers[i])
+			c++;
+	return c;
+}
+
+int CGameContext::GetTeamMateID(int playerID)
+{
+	int Team = ((CGameControllerDDRace*)m_pController)->m_Teams.m_Core.Team(playerID);
+	for (int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		if (Team != ((CGameControllerDDRace*)m_pController)->m_Teams.m_Core.Team(i))
+			continue;
+		CPlayer* pPlayer = m_apPlayers[i];
+		if (!pPlayer && !pPlayer->IsPlaying()) // TODO: check what IsPlaying() means
+			continue;
+
+		if (i != playerID)
+			return i;
+	}
+	return -1;
+}
+
+void CGameContext::CheckTournaStartPlayers()
+{
+	int players = CountPlayers();
+	if (players >= g_Config.m_SvTournaMinPlayers)
+	{
+		StartTournaCountDown();
+		return;
+	}
+
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "%d out of minimum %d players online!", players, g_Config.m_SvTournaMinPlayers);
+	SendBroadcast(aBuf, -1, true);
+}
+
+void CGameContext::CheckTournaStartTime()
+{
+	time_t now;
+	struct tm *now_tm;
+	int hour;
+	int min;
+	now = time(NULL);
+	now_tm = localtime(&now);
+	hour = now_tm->tm_hour;
+	min = now_tm->tm_min;
+	if (hour == g_Config.m_SvTournaStartHour && min == g_Config.m_SvTournaStartMinute)
+		StartTournaCountDown();
+}
+
+void CGameContext::CheckTournaStart()
+{
+	if (m_TournaState != 0) // only start when no toruna is running already
+		return;
+
+	if (Server()->Tick() % 30)
+		return;
+
+	if (g_Config.m_SvTournaMinPlayers)
+		CheckTournaStartPlayers();
+	if (g_Config.m_SvTournaStartHour != 25 && g_Config.m_SvTournaStartMinute != 61)
+		CheckTournaStartTime();
+}
+
+void CGameContext::BlockTournaTick()
+{
+	CheckTournaStart();
+	if (m_TournaState == 0)
+		return;
+
+	if (m_TournaState == 1) // countdown
+	{
+		m_TournaCountDownTick--;
+		if (m_TournaCountDownTick % Server()->TickSpeed() == 0)
+		{
+			char aBuf[128];
+			str_format(aBuf, sizeof(aBuf), "Tournament starts in %d seconds!", m_TournaCountDownTick / Server()->TickSpeed());
+			SendBroadcast(aBuf, -1, true);
+		}
+		if (m_TournaCountDownTick < 0)
+			StartTournament();
+	}
+
+	if (Server()->Tick() % 100) // slow tick
+		return;
+
+	CheckForNewRounds();
+}
+
+void CGameContext::NewTournaRound(int ID1, int ID2)
+{
+	CPlayer *pPlayer1 = m_apPlayers[ID1];
+	CPlayer *pPlayer2 = m_apPlayers[ID2];
+
+	if (!pPlayer1 || !pPlayer2) // TODO: catch missing players and set winner on rq
+		return;
+
+	CCharacter *pChr1 = pPlayer1->GetCharacter();
+	CCharacter *pChr2 = pPlayer2->GetCharacter();
+
+	if (!pChr1 || !pChr2) // TODO: same catch this better than just a return
+		return;
+
+	pChr1->Die(ID1, WEAPON_SELF);
+	pChr2->Die(ID2, WEAPON_SELF);
+}
+
+void CGameContext::TournaScore(int looserID)
+{
+	int winnerID = GetTeamMateID(looserID);
+
+	if (winnerID == -1) // TODO: set the looser to winner if winner is not there
+		return;
+
+	CPlayer *pLooser = m_apPlayers[looserID];
+	CPlayer *pWinner = m_apPlayers[winnerID];
+
+	if (!pLooser || !pWinner) // TODO: handle this better than return
+		return;
+
+	char aBuf[128];
+	pWinner->m_RoundScore++;
+	str_format(aBuf, sizeof(aBuf), "[SCORE] '%s' [%d] : '%s' [%d]", Server()->ClientName(winnerID), pWinner->m_RoundScore, Server()->ClientName(looserID), pLooser->m_RoundScore);
+	SendChatTarget(winnerID, aBuf);
+	SendChatTarget(looserID, aBuf);
+	NewTournaRound(winnerID, looserID);
+
+	if (pWinner->m_RoundScore >= g_Config.m_SvTournaScorelimit)
+		EndRound(winnerID, looserID);
+}
+
+void CGameContext::EndRound(int winnerID, int looserID)
+{
+	CPlayer *pWinner = m_apPlayers[winnerID];
+	CPlayer *pLooser = m_apPlayers[looserID];
+
+	if (pWinner)
+	{
+		SendChatTarget(winnerID, "You won the round!");
+		pWinner->m_RoundsWon++;
+		pWinner->m_TournaState = 2; // waiting for opponent
+	}
+
+	if (pLooser)
+	{
+		SendChatTarget(looserID, "You lost the round!");
+		pLooser->m_TournaState = 3; // lost
+	}
+
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "'%s' won agianst '%s'", Server()->ClientName(winnerID), Server()->ClientName(looserID));
+	SendChatTarget(-1, aBuf);
+}
+
+void CGameContext::SetTournaTeam(int playerID)
+{
+	CPlayer *pPlayer = m_apPlayers[playerID];
+	SendChatTarget(-1, "set team");
+
+	if (!pPlayer)
+		return;
+
+	if (((CGameControllerDDRace*) m_pController)->m_Teams.SetCharacterTeam(playerID, m_TournaTeamCounter))
+	{
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), "%s joined team %d",
+				Server()->ClientName(pPlayer->GetCID()),
+				m_TournaTeamCounter);
+		SendChat(-1, CGameContext::CHAT_ALL, aBuf);
+		pPlayer->m_Last_Team = Server()->Tick();
+	}
+	else
+	{
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "join",
+				"You cannot join this team at this time");
+	}
+}
+
+void CGameContext::CreateTournaTeam(int player1ID, int player2ID)
+{
+	CPlayer *pPlayer1 = m_apPlayers[player1ID];
+	CPlayer *pPlayer2 = m_apPlayers[player2ID];
+
+	if (!pPlayer1)
+	{
+		EndRound(player2ID, player1ID);
+		return;
+	}
+
+	if (!pPlayer2)
+	{
+		EndRound(player1ID, player2ID);
+		return;
+	}
+
+	CCharacter *pChr1 = pPlayer1->GetCharacter();
+	CCharacter *pChr2 = pPlayer2->GetCharacter();
+
+	if (!pChr1)
+	{
+		EndRound(player2ID, player1ID);
+		return;
+	}
+
+	if (!pChr2)
+	{
+		EndRound(player1ID, player2ID);
+		return;
+	}
+
+	m_TournaTeamCounter++; // TODO: maybe only increment if joining the team actually worked but should be fine for now
+	SetTournaTeam(player1ID);
+	SetTournaTeam(player2ID);
+	((CGameControllerDDRace*)m_pController)->m_Teams.SetTeamLock(m_TournaTeamCounter, true);
+	pPlayer1->m_TournaState = 1; // ingame
+	pPlayer2->m_TournaState = 1; // ingame
+	NewTournaRound(player1ID, player2ID);
+	SendChatTarget(-1, "created toruna team");
+}
+
+void CGameContext::CheckForNewRounds()
+{
+	if (m_TournaState != 2) // has to be running
+		return;
+
+	int MateID = -1;
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (!m_apPlayers[i] || m_apPlayers[i]->m_TournaState != 2) // waiting for opponent
+			continue;
+
+		if (MateID == -1) // no mate yet
+		{
+			MateID = i;
+			continue;
+		}
+
+		// found two players -> create a team
+		char aBuf[128];
+		str_format(aBuf, sizeof(aBuf), "Create team with '%s' and '%s'", Server()->ClientName(MateID), Server()->ClientName(i));
+		SendChatTarget(-1, aBuf);
+		CreateTournaTeam(i, MateID);
+	}
+}
+
+void CGameContext::StartTournaCountDown()
+{
+	m_TournaState = 1; // countdown
+	m_TournaCountDownTick = 15 * Server()->TickSpeed();
+}
+
+void CGameContext::StartTournament()
+{
+	SendChatTarget(-1, "TOURNAMENT STARTED!");
+	SendBroadcast("TOURNAMENT STARTED!", -1, true);
+	m_TournaTeamCounter = 0;
+	m_TournaState = 2; // running
+	int MateID = -1;
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (!m_apPlayers[i])
+			continue;
+
+		m_apPlayers[i]->m_TournaState = 0; // force ready
+		if (MateID == -1) // no mate yet
+		{
+			MateID = i;
+			continue;
+		}
+
+		// found two players -> create a team
+		char aBuf[128];
+		str_format(aBuf, sizeof(aBuf), "Create team with '%s' and '%s'", Server()->ClientName(MateID), Server()->ClientName(i));
+		SendChatTarget(-1, aBuf);
+		CreateTournaTeam(i, MateID);
+		MateID = -1;
+	}
+
+	// check for left overs should be max 1
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (!m_apPlayers[i])
+			continue;
+
+		if (m_apPlayers[i]->m_TournaState == 0) // still ready and not ingame
+		{
+			m_apPlayers[i]->m_TournaState = 2; // waiting for opponents
+			SendChatTarget(i, "Please wait for opponents.");
+		}
+	}
 }

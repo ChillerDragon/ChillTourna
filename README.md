@@ -4,6 +4,23 @@ ChillTourna
 A block tournament mod.
 Based on DDraceNetwork which is a mod of teeworlds.
 
+Config & Commands
+-----------------
+
+Config:
+
+``sv_tourna_min_players`` How many players are required to start a tournament 0=off autostart
+
+``sv_tourna_start_hour`` Start tournament on specific hour ( combines with sv_tourna_start_minute )
+
+``sv_tourna_start_minute`` Start tournament on specific minute ( combines with sv_tourna_start_hour )
+
+``sv_tourna_scorelimit`` How many score points are required to win a round
+
+Chat commands:
+
+``/fight <player1> <player2>`` to start a 1 on 1 with the given 2 players
+
 Cloning
 -------
 

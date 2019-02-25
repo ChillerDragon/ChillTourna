@@ -202,6 +202,8 @@ public:
 
 	// ChillTourna
 
+	bool m_IsTournamentWinner;
+	int m_SetTeamOnSpawn;
 	int m_RoundScore;
 	int m_RoundsWon;
 	int m_TournaState; // -1=spectator 0=ready 1=ingame 2=waiting_for_opponent 3=lost

@@ -50,6 +50,11 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
+	if (GameServer()->m_TournaState == 3) // end screen
+		if (m_pPlayer->m_IsTournamentWinner)
+			m_Pos = GameServer()->Collision()->GetRandomTile(TILE_TOURNA_WINNER);
+		else
+			m_Pos = GameServer()->Collision()->GetRandomTile(TILE_TOURNA_LOOSER);
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision(), &((CGameControllerDDRace*)GameServer()->m_pController)->m_Teams.m_Core, &((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts);
@@ -84,6 +89,11 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	{
 		UnFreeze();
 		Freeze(3);
+	}
+	if (m_pPlayer->m_SetTeamOnSpawn != -1)
+	{
+		GameServer()->SetPlayerTeam(m_pPlayer->GetCID(), m_pPlayer->m_SetTeamOnSpawn);
+		m_pPlayer->m_SetTeamOnSpawn = -1;
 	}
 
 	return true;

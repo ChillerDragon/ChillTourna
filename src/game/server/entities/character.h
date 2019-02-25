@@ -88,6 +88,9 @@ public:
 	bool IsPaused() const { return m_Paused; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 
+	// ChillTourna
+	void SetPosition(vec2 Pos) { m_Core.m_Pos = Pos; }
+
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;

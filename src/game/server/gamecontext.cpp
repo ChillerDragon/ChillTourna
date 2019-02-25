@@ -63,7 +63,6 @@ void CGameContext::Construct(int Resetting)
 
 	// ChillTourna
 	m_TournaState = 0; // off
-	m_TournaTeamCounter = 0;
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -3681,6 +3680,46 @@ int CGameContext::CountPlayers()
 	return c;
 }
 
+bool CGameContext::TelePlayerToTile(CPlayer *pPlayer, int tile)
+{
+	if (!pPlayer)
+		return false;
+
+	CCharacter *pChr = pPlayer->GetCharacter();
+	if (!pChr)
+		return false;
+
+	vec2 TilePos = Collision()->GetRandomTile(tile);
+	if (TilePos == vec2(-1, -1))
+		return false;
+
+	pChr->SetPosition(TilePos);
+	return true;
+}
+
+void CGameContext::SetPlayerTeam(int playerID, int team)
+{
+	CPlayer *pPlayer = m_apPlayers[playerID];
+
+	if (!pPlayer)
+		return;
+
+	if (((CGameControllerDDRace*) m_pController)->m_Teams.SetCharacterTeam(playerID, team))
+	{
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), "%s joined team %d",
+				Server()->ClientName(pPlayer->GetCID()),
+				team);
+		SendChat(-1, CGameContext::CHAT_ALL, aBuf);
+		pPlayer->m_Last_Team = Server()->Tick();
+	}
+	else
+	{
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "join",
+				"You cannot join this team at this time");
+	}
+}
+
 int CGameContext::GetTeamMateID(int playerID)
 {
 	int Team = ((CGameControllerDDRace*)m_pController)->m_Teams.m_Core.Team(playerID);
@@ -3766,7 +3805,7 @@ void CGameContext::BlockTournaTick()
 	if (m_TournaState == 0)
 		return;
 
-	if (m_TournaState == 1) // countdown
+	if (m_TournaState == 1) // countdown start
 	{
 		m_TournaCountDownTick--;
 		if (m_TournaCountDownTick % Server()->TickSpeed() == 0)
@@ -3777,6 +3816,20 @@ void CGameContext::BlockTournaTick()
 		}
 		if (m_TournaCountDownTick < 0)
 			StartTournament();
+	}
+	else if (m_TournaState == 3) // end screen
+	{
+		m_TournaCountDownTick--;
+		if (m_TournaCountDownTick < 0)
+		{
+			m_TournaState = 0; // tournament off
+			for (int i = 0; i < MAX_CLIENTS; i++) // respawn all players
+			{
+				if (!m_apPlayers[i] || !m_apPlayers[i]->GetCharacter())
+					continue;
+				m_apPlayers[i]->GetCharacter()->Die(i, WEAPON_SELF);
+			}
+		}
 	}
 
 	if (Server()->Tick() % 100) // slow tick
@@ -3827,6 +3880,47 @@ void CGameContext::TournaScore(int looserID)
 		EndRound(winnerID, looserID);
 }
 
+void CGameContext::EndTournament(int winnerID)
+{
+	if (winnerID == -1)
+	{
+		SendChatTarget(-1, "Nobody won the tournament.");
+		return;
+	}
+	CPlayer *pWinner = m_apPlayers[winnerID];
+	if (!pWinner)
+	{
+		SendChatTarget(-1, "Nobody won the tournament.");
+		m_TournaState = 0; // tourna instant off no end screen
+		return;
+	}
+
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "'%s' won the tournament!", Server()->ClientName(winnerID));
+	SendChatTarget(-1, aBuf);
+	SendBroadcast(aBuf, -1, true);
+	m_TournaCountDownTick = 60 * Server()->TickSpeed(); // 1 minute ending screen
+	m_TournaState = 3; // end screen
+	pWinner->m_IsTournamentWinner = true;
+	for (int i = 0; i < MAX_CLIENTS; i++)
+		TelePlayerToTile(m_apPlayers[i], TILE_TOURNA_LOOSER);
+	TelePlayerToTile(pWinner, TILE_TOURNA_WINNER);
+}
+
+bool CGameContext::CheckTournaWon(int winnerID)
+{
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (!m_apPlayers[i] || i == winnerID)
+			continue;
+
+		if (m_apPlayers[i]->m_TournaState == 1 || m_apPlayers[i]->m_TournaState == 2) // ingame | waiting for opponent
+			return false;
+	}
+	EndTournament(winnerID);
+	return true;
+}
+
 void CGameContext::EndRound(int winnerID, int looserID)
 {
 	CPlayer *pWinner = m_apPlayers[winnerID];
@@ -3835,6 +3929,8 @@ void CGameContext::EndRound(int winnerID, int looserID)
 	if (pWinner)
 	{
 		SendChatTarget(winnerID, "You won the round!");
+		// SetPlayerTeam(winnerID, 0);
+		pWinner->m_SetTeamOnSpawn = 0; // set on respawn because player is dead on round end
 		pWinner->m_RoundsWon++;
 		pWinner->m_TournaState = 2; // waiting for opponent
 	}
@@ -3842,36 +3938,15 @@ void CGameContext::EndRound(int winnerID, int looserID)
 	if (pLooser)
 	{
 		SendChatTarget(looserID, "You lost the round!");
+		// SetPlayerTeam(looserID, 0);
+		pLooser->m_SetTeamOnSpawn = 0; // set on respawn because player is dead on round end
 		pLooser->m_TournaState = 3; // lost
 	}
 
 	char aBuf[128];
 	str_format(aBuf, sizeof(aBuf), "'%s' won agianst '%s'", Server()->ClientName(winnerID), Server()->ClientName(looserID));
 	SendChatTarget(-1, aBuf);
-}
-
-void CGameContext::SetTournaTeam(int playerID)
-{
-	CPlayer *pPlayer = m_apPlayers[playerID];
-	SendChatTarget(-1, "set team");
-
-	if (!pPlayer)
-		return;
-
-	if (((CGameControllerDDRace*) m_pController)->m_Teams.SetCharacterTeam(playerID, m_TournaTeamCounter))
-	{
-		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), "%s joined team %d",
-				Server()->ClientName(pPlayer->GetCID()),
-				m_TournaTeamCounter);
-		SendChat(-1, CGameContext::CHAT_ALL, aBuf);
-		pPlayer->m_Last_Team = Server()->Tick();
-	}
-	else
-	{
-		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "join",
-				"You cannot join this team at this time");
-	}
+	CheckTournaWon(winnerID);
 }
 
 void CGameContext::CreateTournaTeam(int player1ID, int player2ID)
@@ -3906,10 +3981,10 @@ void CGameContext::CreateTournaTeam(int player1ID, int player2ID)
 		return;
 	}
 
-	m_TournaTeamCounter = GetFreeTeam();
-	SetTournaTeam(player1ID);
-	SetTournaTeam(player2ID);
-	((CGameControllerDDRace*)m_pController)->m_Teams.SetTeamLock(m_TournaTeamCounter, true);
+	int team = GetFreeTeam();
+	SetPlayerTeam(player1ID, team);
+	SetPlayerTeam(player2ID, team);
+	((CGameControllerDDRace*)m_pController)->m_Teams.SetTeamLock(team, true);
 	pPlayer1->m_TournaState = 1; // ingame
 	pPlayer2->m_TournaState = 1; // ingame
 	pPlayer1->m_RoundScore = 0;
@@ -3952,7 +4027,6 @@ void CGameContext::StartTournament()
 {
 	SendChatTarget(-1, "TOURNAMENT STARTED!");
 	SendBroadcast("TOURNAMENT STARTED!", -1, true);
-	m_TournaTeamCounter = 0;
 	m_TournaState = 2; // running
 	int MateID = -1;
 	for (int i = 0; i < MAX_CLIENTS; i++)
@@ -3961,6 +4035,7 @@ void CGameContext::StartTournament()
 			continue;
 
 		m_apPlayers[i]->m_TournaState = 0; // force ready
+		m_apPlayers[i]->m_IsTournamentWinner = false; // clear old winner
 		if (MateID == -1) // no mate yet
 		{
 			MateID = i;

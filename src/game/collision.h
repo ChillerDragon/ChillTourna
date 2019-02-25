@@ -96,6 +96,10 @@ public:
 	class CLayers *Layers() { return m_pLayers; }
 	int m_NumSwitchers;
 
+	// ChillTourna
+	int GetCustTile(int x, int y);
+	vec2 GetRandomTile(int Tile);
+
 private:
 
 	class CTeleTile *m_pTele;

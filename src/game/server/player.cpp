@@ -138,6 +138,10 @@ void CPlayer::Reset()
 	// ChillTourna
 
 	m_TournaState = 0; // set ready
+	m_IsTournamentWinner = false;
+	m_RoundScore = 0;
+	m_RoundsWon = 0;
+	m_SetTeamOnSpawn = -1;
 }
 
 void CPlayer::Tick()

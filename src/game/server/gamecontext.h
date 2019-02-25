@@ -426,6 +426,8 @@ public:
 
 	int GetCIDByName(const char * pName);
 	int CountPlayers();
+	bool TelePlayerToTile(CPlayer *pPlayer, int tile);
+	void SetPlayerTeam(int playerID, int team);
 
 	void CheckForNewRounds();
 	void StartTournaCountDown();
@@ -434,16 +436,16 @@ public:
 	void CheckTournaStart();
 	void BlockTournaTick();
 	void StartTournament();
+	void EndTournament(int winnerID);
 	void CreateTournaTeam(int player1ID, int player2ID);
 	void EndRound(int player1ID, int player2ID);
 	void TournaScore(int looserID);
 	void NewTournaRound(int ID1, int ID2);
-	void SetTournaTeam(int playerID);
+	bool CheckTournaWon(int winnerID);
 	int GetTeamMateID(int playerID);
 	int GetFreeTeam();
 
 	int m_TournaCountDownTick;
-	int m_TournaTeamCounter;
 	int m_TournaState; // 0=off 1=countdown 2=running 3=gameover (winning screen)
 };
 

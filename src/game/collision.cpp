@@ -1136,3 +1136,42 @@ int CCollision::IsFCheckpoint(int Index)
 		return z-35;
 	return -1;
 }
+
+// ChillTourna
+
+int CCollision::GetCustTile(int x, int y)
+{
+	if (!m_pTiles)
+		return 0;
+
+	int Nx = clamp(x / 32, 0, m_Width - 1);
+	int Ny = clamp(y / 32, 0, m_Height - 1);
+	int pos = Ny * m_Width + Nx;
+
+	return m_pTiles[pos].m_Index;
+}
+
+vec2 CCollision::GetRandomTile(int Tile)
+{
+	vec2 ReturnValue[512] = { vec2(0,0) };
+	int i = 0;
+	for (int y = 0; y < m_Height; y++)
+		for (int x = 0; x < m_Width; x++)
+		{
+			vec2 Pos(x*32.0f + 16.0f, y*32.0f + 16.0f);
+
+			if (GetCustTile(Pos.x, Pos.y) == Tile)
+			{
+				ReturnValue[i] = Pos;
+				i++;
+			}
+		}
+
+	if (i)
+	{
+		int Rand = rand() % i;
+		return ReturnValue[Rand];
+	}
+
+	return vec2(-1, -1);
+}

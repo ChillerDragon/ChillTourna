@@ -892,7 +892,7 @@ bool CCharacter::IncreaseArmor(int Amount)
 	return true;
 }
 
-void CCharacter::Die(int Killer, int Weapon)
+void CCharacter::Die(int Killer, int Weapon, bool IsScore)
 {
 	if(Server()->IsRecording(m_pPlayer->GetCID()))
 		Server()->StopRecord(m_pPlayer->GetCID());
@@ -924,6 +924,10 @@ void CCharacter::Die(int Killer, int Weapon)
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
 	GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	Teams()->OnCharacterDeath(GetPlayer()->GetCID(), Weapon);
+
+	// ChillTourna
+	if (m_pPlayer->m_TournaState == 1 && IsScore) // ingame
+		GameServer()->TournaScore(m_pPlayer->GetCID());
 }
 
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
@@ -1489,12 +1493,6 @@ void CCharacter::HandleTiles(int Index)
 		}
 
 
-	}
-
-	// ChillTourna block score tile
-	if ((m_TileIndex == TILE_TOURNA_SCORE) || (m_TileFIndex == TILE_TOURNA_SCORE))
-	{
-		GameServer()->TournaScore(m_pPlayer->GetCID());
 	}
 
 	// finish

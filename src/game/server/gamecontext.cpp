@@ -3827,7 +3827,7 @@ void CGameContext::BlockTournaTick()
 			{
 				if (!m_apPlayers[i] || !m_apPlayers[i]->GetCharacter())
 					continue;
-				m_apPlayers[i]->GetCharacter()->Die(i, WEAPON_SELF);
+				m_apPlayers[i]->GetCharacter()->Die(i, WEAPON_SELF, false);
 			}
 		}
 	}
@@ -3852,8 +3852,8 @@ void CGameContext::NewTournaRound(int ID1, int ID2)
 	if (!pChr1 || !pChr2) // TODO: same catch this better than just a return
 		return;
 
-	pChr1->Die(ID1, WEAPON_SELF);
-	pChr2->Die(ID2, WEAPON_SELF);
+	pChr1->Die(ID1, WEAPON_SELF, false);
+	pChr2->Die(ID2, WEAPON_SELF, false);
 }
 
 void CGameContext::TournaScore(int looserID)

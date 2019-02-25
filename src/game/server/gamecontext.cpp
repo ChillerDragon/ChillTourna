@@ -3698,6 +3698,26 @@ int CGameContext::GetTeamMateID(int playerID)
 	return -1;
 }
 
+int CGameContext::GetFreeTeam()
+{
+	int teams[MAX_CLIENTS] = {0};
+	for (int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		if (!m_apPlayers[i])
+			continue;
+
+		teams[i] = ((CGameControllerDDRace*)m_pController)->m_Teams.m_Core.Team(i);
+	}
+	int max = 0;
+	for (int i = 0; i < MAX_CLIENTS; i++) // get max team
+	{
+		if (teams[i] > max)
+			max = teams[i];
+	}
+	max++;
+	return max <= 64 ? max : -1;
+}
+
 void CGameContext::CheckTournaStartPlayers()
 {
 	int players = CountPlayers();
@@ -3886,14 +3906,15 @@ void CGameContext::CreateTournaTeam(int player1ID, int player2ID)
 		return;
 	}
 
-	m_TournaTeamCounter++; // TODO: maybe only increment if joining the team actually worked but should be fine for now
+	m_TournaTeamCounter = GetFreeTeam();
 	SetTournaTeam(player1ID);
 	SetTournaTeam(player2ID);
 	((CGameControllerDDRace*)m_pController)->m_Teams.SetTeamLock(m_TournaTeamCounter, true);
 	pPlayer1->m_TournaState = 1; // ingame
 	pPlayer2->m_TournaState = 1; // ingame
+	pPlayer1->m_RoundScore = 0;
+	pPlayer2->m_RoundScore = 0;
 	NewTournaRound(player1ID, player2ID);
-	SendChatTarget(-1, "created toruna team");
 }
 
 void CGameContext::CheckForNewRounds()

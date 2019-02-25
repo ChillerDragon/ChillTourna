@@ -440,9 +440,10 @@ public:
 	void NewTournaRound(int ID1, int ID2);
 	void SetTournaTeam(int playerID);
 	int GetTeamMateID(int playerID);
+	int GetFreeTeam();
 
 	int m_TournaCountDownTick;
-	int m_TournaTeamCounter; // TODO: get a free team num func instead of incrementing
+	int m_TournaTeamCounter;
 	int m_TournaState; // 0=off 1=countdown 2=running 3=gameover (winning screen)
 };
 

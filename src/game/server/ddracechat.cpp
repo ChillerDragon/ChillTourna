@@ -1425,10 +1425,17 @@ void CGameContext::ConFight(IConsole::IResult *pResult, void *pUserData)
 	if (!pPlayer)
 		return;
 
+	if (pSelf->Server()->GetAuthedState(pResult->m_ClientID) != IServer::AUTHED_ADMIN)
+	{
+		pSelf->SendChatTarget(pPlayer->GetCID(), "Error: you have to be admin to use this command.");
+		return;
+	}
+
 	if (pResult->NumArguments() != 2)
 	{
 		pSelf->SendChatTarget(pPlayer->GetCID(), "Usage: /fight <player1> <player2>");
 		pSelf->SendChatTarget(pPlayer->GetCID(), "Info: teleports two given players into a 1n1 arena");
+		return;
 	}
 
 	char aBuf[128];

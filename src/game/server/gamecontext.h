@@ -424,6 +424,7 @@ public:
 
 	// ChillTourna
 
+	void AbuseMotd(const char * pMsg, int ClientID);
 	int GetCIDByName(const char * pName);
 	int CountPlayers();
 	bool TelePlayerToTile(CPlayer *pPlayer, int tile);

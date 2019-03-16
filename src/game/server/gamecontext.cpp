@@ -4090,3 +4090,11 @@ void CGameContext::StartTournament()
 		}
 	}
 }
+
+void CGameContext::AbuseMotd(const char * pMsg, int ClientID)
+{
+	// send motd
+	CNetMsg_Sv_Motd Msg;
+	Msg.m_pMessage = pMsg;
+	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ClientID);
+}

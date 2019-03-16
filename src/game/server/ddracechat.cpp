@@ -1412,8 +1412,9 @@ void CGameContext::ConTest(IConsole::IResult *pResult, void *pUserData)
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 	if (!pPlayer)
 		return;
+
+	pSelf->AbuseMotd("hello world", pResult->m_ClientID);
 	pSelf->SendChatTarget(pPlayer->GetCID(), "test failed");
-	pSelf->StartTournament();
 }
 
 void CGameContext::ConFight(IConsole::IResult *pResult, void *pUserData)

@@ -3952,7 +3952,13 @@ void CGameContext::EndRound(int winnerID, int looserID)
 	else
 		str_format(aBuf, sizeof(aBuf), "'%s' won agianst ( an rage quitted opponent )", Server()->ClientName(winnerID));
 	SendChatTarget(-1, aBuf);
-	CheckTournaWon(winnerID);
+	if (pWinner->m_IsSingleRoundFight)
+	{
+		TelePlayerToTile(pWinner, TILE_TOURNA_WINNER);
+		SetPlayerTeam(winnerID, 0);
+	}
+	else
+		CheckTournaWon(winnerID);
 }
 
 void CGameContext::CreateTournaTeam(int player1ID, int player2ID)

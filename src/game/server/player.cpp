@@ -137,6 +137,7 @@ void CPlayer::Reset()
 
 	// ChillTourna
 
+	m_IsSingleRoundFight = false;
 	m_TournaState = 0; // set ready
 	m_IsTournamentWinner = false;
 	m_RoundScore = 0;

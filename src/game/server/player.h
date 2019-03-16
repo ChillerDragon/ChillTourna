@@ -202,6 +202,7 @@ public:
 
 	// ChillTourna
 
+	bool m_IsSingleRoundFight;
 	bool m_IsTournamentWinner;
 	int m_SetTeamOnSpawn;
 	int m_RoundScore;

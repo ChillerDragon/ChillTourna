@@ -1442,6 +1442,10 @@ void CGameContext::ConFight(IConsole::IResult *pResult, void *pUserData)
 		return;
 	}
 
+	CPlayer *pPlayer2 = pSelf->m_apPlayers[ID2];
+	if (pPlayer2)
+		pPlayer2->m_IsSingleRoundFight = true;
+	pPlayer->m_IsSingleRoundFight = true;
 	pSelf->CreateTournaTeam(ID1, ID2);
 	str_format(aBuf, sizeof(aBuf), "Created block match with '%s' and '%s'.", pResult->GetString(0), pResult->GetString(1));
 	pSelf->SendChatTarget(pPlayer->GetCID(), aBuf);

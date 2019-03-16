@@ -3860,8 +3860,11 @@ void CGameContext::TournaScore(int looserID)
 {
 	int winnerID = GetTeamMateID(looserID);
 
-	if (winnerID == -1) // TODO: set the looser to winner if winner is not there
+	if (winnerID == -1) // set the looser to winner if winner is not there
+	{
+		EndRound(looserID, winnerID);
 		return;
+	}
 
 	CPlayer *pLooser = m_apPlayers[looserID];
 	CPlayer *pWinner = m_apPlayers[winnerID];
@@ -3944,7 +3947,10 @@ void CGameContext::EndRound(int winnerID, int looserID)
 	}
 
 	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "'%s' won agianst '%s'", Server()->ClientName(winnerID), Server()->ClientName(looserID));
+	if (pLooser)
+		str_format(aBuf, sizeof(aBuf), "'%s' won agianst '%s'", Server()->ClientName(winnerID), Server()->ClientName(looserID));
+	else
+		str_format(aBuf, sizeof(aBuf), "'%s' won agianst ( an rage quitted opponent )", Server()->ClientName(winnerID));
 	SendChatTarget(-1, aBuf);
 	CheckTournaWon(winnerID);
 }

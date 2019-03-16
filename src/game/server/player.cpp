@@ -381,6 +381,14 @@ void CPlayer::FakeSnap()
 
 void CPlayer::OnDisconnect(const char *pReason)
 {
+	if (m_TournaState == 1) // ingame
+	{
+		int mateID = GameServer()->GetTeamMateID(m_ClientID);
+		if (mateID != -1)
+		{
+			GameServer()->EndRound(mateID, m_ClientID);
+		}
+	}
 	KillCharacter();
 
 	if(Server()->ClientIngame(m_ClientID))

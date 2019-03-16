@@ -3843,17 +3843,24 @@ void CGameContext::NewTournaRound(int ID1, int ID2)
 	CPlayer *pPlayer1 = m_apPlayers[ID1];
 	CPlayer *pPlayer2 = m_apPlayers[ID2];
 
-	if (!pPlayer1 || !pPlayer2) // TODO: catch missing players and set winner on rq
+	if (!pPlayer1) // catch missing players and set winner on rq
+	{
+		EndRound(ID2, ID1);
 		return;
+	}
+	if (!pPlayer2) // catch missing players and set winner on rq
+	{
+		EndRound(ID1, ID2);
+		return;
+	}
 
 	CCharacter *pChr1 = pPlayer1->GetCharacter();
 	CCharacter *pChr2 = pPlayer2->GetCharacter();
 
-	if (!pChr1 || !pChr2) // TODO: same catch this better than just a return
-		return;
-
-	pChr1->Die(ID1, WEAPON_SELF, false);
-	pChr2->Die(ID2, WEAPON_SELF, false);
+	if (pChr1)
+		pChr1->Die(ID1, WEAPON_SELF, false);
+	if (pChr2)
+		pChr2->Die(ID2, WEAPON_SELF, false);
 }
 
 void CGameContext::TournaScore(int looserID)
@@ -3928,6 +3935,9 @@ void CGameContext::EndRound(int winnerID, int looserID)
 {
 	CPlayer *pWinner = m_apPlayers[winnerID];
 	CPlayer *pLooser = m_apPlayers[looserID];
+
+	if (!pWinner)
+		return;
 
 	if (pWinner)
 	{

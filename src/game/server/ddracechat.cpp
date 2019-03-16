@@ -1413,7 +1413,6 @@ void CGameContext::ConTest(IConsole::IResult *pResult, void *pUserData)
 	if (!pPlayer)
 		return;
 
-	pSelf->AbuseMotd("hello world", pResult->m_ClientID);
 	pSelf->SendChatTarget(pPlayer->GetCID(), "test failed");
 }
 
@@ -1462,6 +1461,36 @@ void CGameContext::ConFight(IConsole::IResult *pResult, void *pUserData)
 	pSelf->CreateTournaTeam(ID1, ID2);
 	str_format(aBuf, sizeof(aBuf), "Created block match with '%s' and '%s'.", pResult->GetString(0), pResult->GetString(1));
 	pSelf->SendChatTarget(pPlayer->GetCID(), aBuf);
+}
+
+void CGameContext::ConTournament(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *) pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
+	if (!pPlayer)
+		return;
+
+	if (pResult->NumArguments() == 0)
+	{
+		pSelf->SendChatTarget(pPlayer->GetCID(), "Usage: /tournament <start/score>");
+		return;
+	}
+
+	if (!str_comp_nocase(pResult->GetString(0), "start"))
+	{
+		if (pSelf->Server()->GetAuthedState(pResult->m_ClientID) != IServer::AUTHED_ADMIN)
+		{
+			pSelf->SendChatTarget(pPlayer->GetCID(), "Error: you have to be admin to start a tournament.");
+			return;
+		}
+		pSelf->StartTournament();
+	}
+	else if (!str_comp_nocase(pResult->GetString(0), "score"))
+	{
+		pSelf->AbuseMotd("tournament score", pResult->m_ClientID);
+	}
 }
 
 #if defined(CONF_SQL)

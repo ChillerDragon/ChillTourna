@@ -369,6 +369,7 @@ private:
 
 	static void ConTest(IConsole::IResult *pResult, void *pUserData);
 	static void ConFight(IConsole::IResult *pResult, void *pUserData);
+	static void ConTournament(IConsole::IResult *pResult, void *pUserData);
 
 	enum
 	{

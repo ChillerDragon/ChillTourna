@@ -54,6 +54,8 @@ CHAT_COMMAND("kill", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConProtectedKill, this, "K
 
 CHAT_COMMAND("test", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTest, this, "For testing purposes")
 CHAT_COMMAND("fight", "?ss", CFGFLAG_CHAT|CFGFLAG_SERVER, ConFight, this, "Command to start 1n1 between to players")
+CHAT_COMMAND("tournament", "?s", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTournament, this, "Tournament command")
+CHAT_COMMAND("tourna", "?s", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTournament, this, "Tournament command")
 
 #if defined(CONF_SQL)
 CHAT_COMMAND("times", "?s[player name] ?i[number of times to skip]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTimes, this, "/times ?s?i shows last 5 times of the server or of a player beginning with name s starting with time i (i = 1 by default)")

@@ -20,6 +20,7 @@ Config:
 ``sv_tourna_scorelimit`` How many score points are required to win a round
 
 ``sv_allow_selfkill`` To deactive selfkill ( less problems with accidental selfkills in tournaments )
+
 Chat commands:
 
 ``/fight <player1> <player2>`` for admins to start a 1 on 1 with the given 2 players

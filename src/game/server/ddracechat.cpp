@@ -1441,6 +1441,11 @@ void CGameContext::ConFight(IConsole::IResult *pResult, void *pUserData)
 		pSelf->SendChatTarget(pPlayer->GetCID(), aBuf);
 		return;
 	}
+	if (ID1 == ID2)
+	{
+		pSelf->SendChatTarget(pPlayer->GetCID(), "Error: please select two different players.");
+		return;
+	}
 
 	CPlayer *pPlayer2 = pSelf->m_apPlayers[ID2];
 	if (pPlayer2)

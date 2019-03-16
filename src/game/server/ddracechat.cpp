@@ -1444,7 +1444,7 @@ void CGameContext::ConFight(IConsole::IResult *pResult, void *pUserData)
 
 	if (ID1 == -1 || ID2 == -1)
 	{
-		str_format(aBuf, sizeof(aBuf), "Error: player '%s' is not online.", pResult->GetString(ID1 == -1 ? ID1 : ID2));
+		str_format(aBuf, sizeof(aBuf), "Error: player '%s' is not online.", pResult->GetString(ID1 == -1 ? 0 : 1));
 		pSelf->SendChatTarget(pPlayer->GetCID(), aBuf);
 		return;
 	}
@@ -1489,7 +1489,7 @@ void CGameContext::ConTournament(IConsole::IResult *pResult, void *pUserData)
 	}
 	else if (!str_comp_nocase(pResult->GetString(0), "score"))
 	{
-		pSelf->AbuseMotd("tournament score", pResult->m_ClientID);
+		pSelf->TournaShowScore(pResult->m_ClientID);
 	}
 }
 

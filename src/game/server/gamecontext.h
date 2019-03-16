@@ -449,6 +449,16 @@ public:
 
 	int m_TournaCountDownTick;
 	int m_TournaState; // 0=off 1=countdown 2=running 3=gameover (winning screen)
+
+	enum
+	{
+		TOURNA_SCORE_LINES = 16
+	};
+	char m_aaTournaScoreLines[TOURNA_SCORE_LINES][128];
+	int m_CurrentTournaLine;
+	void TournaShowScore(int playerID);
+	void AddTournaLine(const char *pLine);
+	void ClearTournaLines();
 };
 
 inline int64_t CmaskAll() { return -1LL; }

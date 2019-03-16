@@ -63,6 +63,8 @@ void CGameContext::Construct(int Resetting)
 
 	// ChillTourna
 	m_TournaState = 0; // off
+	m_CurrentTournaLine = 0;
+	ClearTournaLines();
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -3962,11 +3964,26 @@ void CGameContext::EndRound(int winnerID, int looserID)
 	}
 
 	char aBuf[128];
+	char aLine[128];
 	if (pLooser)
+	{
 		str_format(aBuf, sizeof(aBuf), "'%s' won agianst '%s'", Server()->ClientName(winnerID), Server()->ClientName(looserID));
+		str_format(aLine, sizeof(aLine), "[%d] '%s'", pWinner->m_RoundScore, Server()->ClientName(winnerID));
+		AddTournaLine(aLine);
+		str_format(aLine, sizeof(aLine), "[%d] '%s'", pLooser->m_RoundScore, Server()->ClientName(looserID));
+		AddTournaLine(aLine);
+	}
 	else
+	{
 		str_format(aBuf, sizeof(aBuf), "'%s' won agianst ( an rage quitted opponent )", Server()->ClientName(winnerID));
+		str_format(aBuf, sizeof(aBuf), "'%s' won agianst '%s'", Server()->ClientName(winnerID), Server()->ClientName(looserID));
+		str_format(aLine, sizeof(aLine), "[%d] '%s'", pWinner->m_RoundScore, Server()->ClientName(winnerID));
+		AddTournaLine(aLine);
+		str_format(aLine, sizeof(aLine), "[x] rage quitted opponent");
+		AddTournaLine(aLine);
+	}
 	SendChatTarget(-1, aBuf);
+	AddTournaLine("------------------------------------------------");
 	if (pWinner->m_IsSingleRoundFight)
 	{
 		TelePlayerToTile(pWinner, TILE_TOURNA_WINNER);
@@ -4052,6 +4069,7 @@ void CGameContext::StartTournaCountDown()
 
 void CGameContext::StartTournament()
 {
+	ClearTournaLines();
 	SendChatTarget(-1, "TOURNAMENT STARTED!");
 	SendBroadcast("TOURNAMENT STARTED!", -1, true);
 	m_TournaState = 2; // running
@@ -4061,6 +4079,7 @@ void CGameContext::StartTournament()
 		if (!m_apPlayers[i])
 			continue;
 
+		m_apPlayers[i]->m_IsSingleRoundFight = false;
 		m_apPlayers[i]->m_TournaState = 0; // force ready
 		m_apPlayers[i]->m_IsTournamentWinner = false; // clear old winner
 		if (MateID == -1) // no mate yet
@@ -4097,4 +4116,34 @@ void CGameContext::AbuseMotd(const char * pMsg, int ClientID)
 	CNetMsg_Sv_Motd Msg;
 	Msg.m_pMessage = pMsg;
 	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ClientID);
+}
+
+void CGameContext::ClearTournaLines()
+{
+	m_CurrentTournaLine = 0;
+	for (int i = 0; i < TOURNA_SCORE_LINES; i++)
+	{
+		m_aaTournaScoreLines[i][0] = '\0';
+	}
+}
+
+void CGameContext::AddTournaLine(const char *pLine)
+{
+	if (m_CurrentTournaLine >= TOURNA_SCORE_LINES) // TODO: mave add scrolling here or a warning message ( or even add multiple pages )
+		return;
+	str_format(m_aaTournaScoreLines[m_CurrentTournaLine], sizeof(m_aaTournaScoreLines[m_CurrentTournaLine]), "%s", pLine);
+	m_CurrentTournaLine++;
+}
+
+void CGameContext::TournaShowScore(int playerID)
+{
+	char aScoreBoard[2048]; // 16 * 128
+	str_format(aScoreBoard, sizeof(aScoreBoard), "  ~~~ Tourna Games Played ~~~");
+	for (int i = 0; i < TOURNA_SCORE_LINES; i++)
+	{
+		if (m_aaTournaScoreLines[i][0] == '\0')
+			continue;
+		str_format(aScoreBoard, sizeof(aScoreBoard), "%s\n%s", aScoreBoard, m_aaTournaScoreLines[i]);
+	}
+	AbuseMotd(aScoreBoard, playerID);
 }

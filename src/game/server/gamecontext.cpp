@@ -1964,6 +1964,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				SendChatTarget(ClientID, "Kill Protection enabled. If you really want to kill, type /kill");
 				return;
 			}
+			if (g_Config.m_SvAllowSelfkill == 0)
+			{
+				SendChatTarget(ClientID, "Server does not allow to selfkill.");
+				return;
+			}
 
 			pPlayer->m_LastKill = Server()->Tick();
 			pPlayer->KillCharacter(WEAPON_SELF);

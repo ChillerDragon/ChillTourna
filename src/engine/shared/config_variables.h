@@ -11,6 +11,7 @@ MACRO_CONFIG_INT(SvTournaMinPlayers, sv_tourna_min_players, 0, 0, 100, CFGFLAG_S
 MACRO_CONFIG_INT(SvTournaStartHour, sv_tourna_start_hour, 25, 0, 25, CFGFLAG_SERVER, "Start tournament on specific hour ( combines with sv_tourna_start_minute )")
 MACRO_CONFIG_INT(SvTournaStartMinute, sv_tourna_start_minute, 61, 0, 61, CFGFLAG_SERVER, "Start tournament on specific minute ( combines with sv_tourna_start_hour )")
 MACRO_CONFIG_INT(SvTournaScorelimit, sv_tourna_scorelimit, 10, 1, 100, CFGFLAG_SERVER, "How many score points are required to win a round")
+MACRO_CONFIG_INT(SvAllowSelfkill, sv_allow_selfkill, 0, 0, 1, CFGFLAG_SERVER, "Allow players to selfkill. (recommaned to leave deactivated for tournas)")
 
 MACRO_CONFIG_STR(PlayerName, player_name, 16, "nameless tee", CFGFLAG_SAVE|CFGFLAG_CLIENT, "Name of the player")
 MACRO_CONFIG_STR(PlayerClan, player_clan, 12, "", CFGFLAG_SAVE|CFGFLAG_CLIENT, "Clan of the player")

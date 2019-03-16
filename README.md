@@ -4,7 +4,16 @@ ChillTourna
 A block tournament mod.
 Based on DDraceNetwork which is a mod of teeworlds.
 
-Lobby spawn is default spawn and red spawn is block arena.
+Tiles
+-----
+
+Default spawn (192) - lobby
+
+Red spawn (193) - tournament arena
+
+Tourna winner (93) - end screen winner area
+
+Tourna looser (109) - end screen looser area
 
 Config & Commands
 -----------------
